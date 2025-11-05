@@ -1,0 +1,11 @@
+disaster_type_id,disaster_type,subcategory,description
+1,Earthquake,Geophysical,Ground shaking and rupture of Earth's crust
+2,Flood,Hydrological,Overflow of water onto dry land
+3,Drought,Climatological,Prolonged period of deficient rainfall
+4,Wildfire,Meteorological,Uncontrolled burning of forest areas
+5,Volcano,Geophysical,Eruption of magma and gases from Earth
+6,Tsunami,Hydrological,Series of sea waves caused by undersea disturbance
+7,Hurricane,Meteorological,Intense tropical cyclone with high winds
+8,Landslide,Geophysical,Movement of soil and rock down a slope
+9,Tornado,Meteorological,Rotating column of air in contact with ground
+10,Extreme Heat,Climatological,Prolonged period of abnormally high temperature

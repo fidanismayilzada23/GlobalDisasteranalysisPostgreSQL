@@ -1,0 +1,21 @@
+country_id,country_name,region,population,gdp_per_capita,urbanization_rate
+1,Turkey,Asia,85000000,9500,76
+2,Japan,Asia,126000000,42000,92
+3,Chile,South America,19000000,15000,87
+4,United States,North America,330000000,63000,83
+5,Italy,Europe,59000000,34000,71
+6,India,Asia,1420000000,2500,36
+7,Indonesia,Asia,276000000,4800,57
+8,Brazil,South America,215000000,12000,87
+9,Australia,Oceania,26000000,57000,86
+10,Mexico,North America,128000000,18000,81
+11,China,Asia,1410000000,12000,65
+12,Germany,Europe,84000000,52000,78
+13,Nigeria,Africa,223000000,2400,53
+14,Canada,North America,39000000,52000,82
+15,France,Europe,65000000,49000,81
+16,Spain,Europe,47000000,34000,81
+17,Argentina,South America,45000000,13000,92
+18,South Korea,Asia,52000000,44000,81
+19,Egypt,Africa,112000000,3900,43
+20,Norway,Europe,5400000,82000,83

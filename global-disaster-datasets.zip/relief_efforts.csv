@@ -1,0 +1,74 @@
+relief_id,disaster_id,organization,funds_allocated_musd,volunteers,aid_type,response_time_days
+1,1,UNDP,290,513,Water Supply,10
+2,1,FEMA,230,19504,Economic Relief,21
+3,2,CARE,236,14988,Reconstruction,17
+4,2,CARE,416,6060,Shelter Support,10
+5,3,UNICEF,429,8196,Water Supply,8
+6,3,FEMA,85,1300,Medical Aid,8
+7,4,Save the Children,445,2886,Evacuation,14
+8,4,Save the Children,109,13082,Evacuation,13
+9,5,World Food Programme,345,681,Shelter Support,25
+10,6,FEMA,100,17472,Evacuation,2
+11,6,Oxfam,137,4476,Evacuation,5
+12,7,Oxfam,296,10897,Evacuation,20
+13,7,Oxfam,228,18452,Evacuation,29
+14,8,CARE,240,8993,Reconstruction,27
+15,9,Oxfam,258,8339,Water Supply,15
+16,9,UNICEF,375,9862,Reconstruction,9
+17,10,WWF,467,18199,Shelter Support,5
+18,10,World Food Programme,128,13051,Food Distribution,23
+19,11,UNICEF,222,13856,Firefighting,18
+20,12,UNDP,41,7277,Housing Recovery,13
+21,12,Save the Children,494,1140,Economic Relief,13
+22,13,Red Cross,492,12026,Water Supply,25
+23,13,UNDP,446,14230,Infrastructure Repair,24
+24,14,CARE,122,9443,Housing Recovery,16
+25,15,UNDP,182,13748,Food Distribution,27
+26,16,World Food Programme,328,18002,Medical Aid,30
+27,16,UNDP,313,18993,Medical Aid,3
+28,17,World Food Programme,453,15628,Food Distribution,2
+29,17,UNHCR,204,11226,Reconstruction,15
+30,18,WWF,399,12923,Water Supply,25
+31,18,UNDP,139,3183,Evacuation,1
+32,19,WWF,124,2748,Medical Aid,25
+33,20,FEMA,112,1167,Economic Relief,5
+34,21,World Food Programme,252,4248,Economic Relief,7
+35,22,UNHCR,402,12587,Food Distribution,20
+36,22,Save the Children,392,4253,Food Distribution,10
+37,23,Save the Children,23,10722,Economic Relief,22
+38,24,UNDP,492,6998,Shelter Support,19
+39,24,FEMA,62,10382,Economic Relief,26
+40,25,Save the Children,410,1845,Firefighting,18
+41,26,WWF,45,17079,Firefighting,1
+42,26,UNDP,431,16562,Shelter Support,14
+43,27,CARE,372,5513,Housing Recovery,6
+44,27,Oxfam,343,9350,Economic Relief,26
+45,28,CARE,233,19914,Water Supply,11
+46,28,FEMA,435,3339,Water Supply,29
+47,29,FEMA,394,15727,Economic Relief,20
+48,29,UNDP,182,1440,Evacuation,28
+49,30,World Food Programme,259,7450,Firefighting,26
+50,30,UNHCR,184,9663,Economic Relief,23
+51,31,Oxfam,15,17428,Reconstruction,3
+52,31,FEMA,378,13817,Evacuation,18
+53,32,CARE,340,16583,Evacuation,26
+54,33,UNICEF,160,7761,Housing Recovery,23
+55,34,UNHCR,349,19556,Firefighting,16
+56,35,UNDP,391,18535,Firefighting,12
+57,35,CARE,148,10547,Water Supply,8
+58,36,FEMA,171,4417,Infrastructure Repair,25
+59,37,FEMA,120,16366,Water Supply,24
+60,38,UNICEF,436,6860,Water Supply,8
+61,38,WWF,101,10404,Medical Aid,23
+62,39,UNHCR,33,2286,Infrastructure Repair,10
+63,40,CARE,62,901,Economic Relief,10
+64,41,CARE,235,11664,Food Distribution,2
+65,41,UNHCR,491,16154,Shelter Support,27
+66,42,UNDP,261,2927,Economic Relief,21
+67,43,World Food Programme,86,18943,Water Supply,3
+68,44,UNICEF,295,14137,Economic Relief,20
+69,45,Oxfam,204,15262,Evacuation,10
+70,46,UNHCR,301,2473,Economic Relief,24
+71,46,UNICEF,495,7308,Reconstruction,9
+72,47,World Food Programme,132,6195,Infrastructure Repair,3
+73,48,Red Cross,219,15262,Economic Relief,16
