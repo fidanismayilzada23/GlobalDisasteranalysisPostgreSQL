@@ -1,6 +1,6 @@
 # 🌍 Global Disaster Analytics (SQL)
 
-### 📊 Overview
+###  Overview
 This project presents a **comprehensive SQL-based analytical study** of **global natural disasters**.  
 Using a multi-table relational dataset, it examines **environmental impact**, **economic damage**, **humanitarian response**, and **recovery outcomes** through **advanced SQL queries**, including **CTEs**, **Window Functions**, and **Comparative Indexing**.
 
@@ -8,7 +8,7 @@ The goal of the project is to derive **data-driven insights** that support **dis
 
 ---
 
-### 🧩 Key Insights
+###  Key Insights
 
 #### 🔹 Regional Vulnerability & Exposure
 - Identified **regions with the highest disaster frequency**
@@ -38,7 +38,7 @@ The goal of the project is to derive **data-driven insights** that support **dis
 
 ---
 
-### 🧠 Tools & Techniques
+### Tools & Techniques
 
 | Category  | Tool / Concept |
 |----------|----------------|
