@@ -1,0 +1,415 @@
+CREATE TABLE countries (
+    country_id SERIAL PRIMARY KEY,
+    country_name VARCHAR(100) UNIQUE NOT NULL,
+    region VARCHAR(100),
+    population BIGINT,
+    gdp_per_capita INT,
+    urbanization_rate INT
+)
+CREATE TABLE disaster_types (
+    disaster_type_id SERIAL PRIMARY KEY,
+    disaster_type VARCHAR(50) UNIQUE NOT NULL,
+    subcategory VARCHAR(50),
+    description VARCHAR(200)
+)
+CREATE TABLE disasters (
+    disaster_id SERIAL PRIMARY KEY,
+    disaster_name VARCHAR(100) UNIQUE NOT NULL,
+    disaster_type_id INT NOT NULL REFERENCES disaster_types(disaster_type_id),
+    country_id INT NOT NULL REFERENCES countries(country_id),
+    start_date DATE,
+    end_date DATE,
+    total_deaths INT,
+    total_affected BIGINT,
+    total_damage BIGINT,
+    severity_index INT
+);
+CREATE TABLE relief_efforts (
+    relief_id SERIAL PRIMARY KEY,
+    disaster_id INT NOT NULL REFERENCES disasters(disaster_id),
+    organization VARCHAR(100),
+    funds_allocated_musd INT,
+    volunteers INT,
+    aid_type VARCHAR(100),
+    response_time_days INT
+)
+CREATE TABLE environmental_impact (
+    env_id SERIAL PRIMARY KEY,
+    disaster_id INT NOT NULL REFERENCES disasters(disaster_id),
+    co2_increase_percent INT,
+    forest_loss_hectares INT,
+    water_contamination_index INT,
+    air_quality_drop_index INT,
+    soil_degradation_index INT
+)
+CREATE TABLE economic_impacts (
+    econ_id SERIAL PRIMARY KEY,
+    country_id INT NOT NULL REFERENCES countries(country_id),
+    YEAR INT,
+    total_disasters INT,
+    total_damage_usd_million BIGINT,
+    gdp_loss_percent NUMERIC(5,2),
+    insurance_payout_usd_million BIGINT,
+    foreign_aid_usd_million BIGINT,
+    recovery_time_years INT
+)
+////////////////////////////////////////////////7
+
+-- ==================================================================
+-- 1) Country & Region Overview | Ölkə və Region Baxışı
+-- ==================================================================
+
+-- 1.1 Total disasters by country | Ölkə üzrə fəlakət sayı
+SELECT c.country_name, COUNT(d.disaster_id) AS total_disasters
+FROM disasters d
+JOIN countries c ON c.country_id = d.country_id
+GROUP BY c.country_name
+ORDER BY total_disasters DESC
+LIMIT 15;
+
+-- 1.2 Total affected population by region | Region üzrə təsirlənən əhali
+SELECT c.region, SUM(d.total_affected) AS affected_people
+FROM disasters d
+JOIN countries c ON c.country_id = d.country_id
+GROUP BY c.region
+ORDER BY affected_people DESC;
+
+-- 1.3 Top 10 deadliest disasters | Ən çox itki verən 10 fəlakət
+SELECT d.disaster_name, c.country_name, d.total_deaths
+FROM disasters d
+JOIN countries c ON c.country_id = d.country_id
+ORDER BY d.total_deaths DESC
+LIMIT 10;
+
+-- 1.4 Average disaster duration (days) by region | Region üzrə orta davametmə (gün)
+SELECT c.region,
+       ROUND(AVG(JULIANDAY(d.end_date) - JULIANDAY(d.start_date)), 2) AS avg_days
+FROM disasters d
+JOIN countries c ON c.country_id = d.country_id
+WHERE d.start_date IS NOT NULL AND d.end_date IS NOT NULL
+GROUP BY c.region
+ORDER BY avg_days DESC;
+
+-- 1.5 Countries with longest average disasters | Orta davametməsi ən uzun olan ölkələr
+WITH Dur AS (
+  SELECT d.country_id, (JULIANDAY(d.end_date) - JULIANDAY(d.start_date)) AS days_len
+  FROM disasters d
+  WHERE d.start_date IS NOT NULL AND d.end_date IS NOT NULL
+)
+SELECT c.country_name, ROUND(AVG(days_len),2) AS avg_duration_days
+FROM Dur x
+JOIN countries c ON c.country_id = x.country_id
+GROUP BY c.country_name
+ORDER BY avg_duration_days DESC
+LIMIT 10;
+
+
+-- ==================================================================
+-- 2) Disaster Type Analytics | Fəlakət Növü Analitikası
+-- ==================================================================
+
+-- 2.1 Economic damage by disaster type | Fəlakət növünə görə iqtisadi zərər
+SELECT dt.disaster_type, SUM(d.total_damage) AS total_damage
+FROM disasters d
+JOIN disaster_types dt ON dt.disaster_type_id = d.disaster_type_id
+GROUP BY dt.disaster_type
+ORDER BY total_damage DESC;
+
+-- 2.2 Severity vs. deaths (summary) | Şiddət indeksi ilə ölüm sayı əlaqəsi
+SELECT dt.disaster_type,
+       ROUND(AVG(d.severity_index),2) AS avg_severity,
+       ROUND(AVG(d.total_deaths),2)   AS avg_deaths,
+       MAX(d.total_deaths)            AS max_deaths
+FROM disasters d
+JOIN disaster_types dt ON dt.disaster_type_id = d.disaster_type_id
+GROUP BY dt.disaster_type
+ORDER BY avg_deaths DESC;
+
+-- 2.3 Longest disasters per type | Növ üzrə ən uzun davam edən fəlakətlər
+WITH D AS (
+  SELECT dt.disaster_type, d.disaster_name,
+         (JULIANDAY(d.end_date) - JULIANDAY(d.start_date)) AS duration_days,
+         ROW_NUMBER() OVER (PARTITION BY dt.disaster_type
+                            ORDER BY (JULIANDAY(d.end_date) - JULIANDAY(d.start_date)) DESC) AS rn
+  FROM disasters d
+  JOIN disaster_types dt ON dt.disaster_type_id = d.disaster_type_id
+  WHERE d.start_date IS NOT NULL AND d.end_date IS NOT NULL
+)
+SELECT disaster_type, disaster_name, ROUND(duration_days,2) AS duration_days
+FROM D
+WHERE rn = 1
+ORDER BY duration_days DESC;
+
+-- 2.4 Most frequent disaster type by country | Ölkə üzrə ən çox rast gəlinən felaket növü
+WITH T AS (
+  SELECT c.country_name, dt.disaster_type, COUNT(*) AS hits
+  FROM disasters d
+  JOIN countries c ON c.country_id = d.country_id
+  JOIN disaster_types dt ON dt.disaster_type_id = d.disaster_type_id
+  GROUP BY c.country_name, dt.disaster_type
+)
+SELECT country_name, disaster_type, hits
+FROM (
+  SELECT T.*,
+         ROW_NUMBER() OVER (PARTITION BY country_name ORDER BY hits DESC) AS rn
+  FROM T
+) X
+WHERE rn = 1
+ORDER BY hits DESC;
+
+
+-- ==================================================================
+-- 3) Human Impact & Relief | İnsan Təsiri və Yardım
+-- ==================================================================
+
+-- 3.1 Volunteers by organization | Təşkilat üzrə könüllülər
+SELECT r.organization, SUM(r.volunteers) AS total_volunteers
+FROM relief_efforts r
+GROUP BY r.organization
+ORDER BY total_volunteers DESC;
+
+-- 3.2 Avg response time by org | Təşkilat üzrə orta reaksiya müddəti
+SELECT r.organization,
+       ROUND(AVG(r.response_time_days),2) AS avg_response_days
+FROM relief_efforts r
+GROUP BY r.organization
+ORDER BY avg_response_days ASC;
+
+-- 3.3 Funds allocated vs. fatalities | Maliyyə ve itkilər
+SELECT r.organization,
+       SUM(r.funds_allocated_musd) AS total_funds_musd,
+       SUM(d.total_deaths)         AS total_deaths
+FROM relief_efforts r
+JOIN disasters d ON d.disaster_id = r.disaster_id
+GROUP BY r.organization
+ORDER BY total_funds_musd DESC;
+
+-- 3.4 Fastest-responding org per disaster | Hər fəlakət üzrə ən sürətli yardım eden təşkilat 
+WITH R AS (
+  SELECT d.disaster_name, r.organization, r.response_time_days,
+         ROW_NUMBER() OVER (PARTITION BY d.disaster_id ORDER BY r.response_time_days ASC) AS rn
+  FROM relief_efforts r
+  JOIN disasters d ON d.disaster_id = r.disaster_id
+)
+SELECT disaster_name, organization, response_time_days
+FROM R
+WHERE rn = 1
+ORDER BY response_time_days ASC;
+
+
+-- ==================================================================
+-- 4) Environmental Impact | Ekoloji Təsir
+-- ==================================================================
+
+-- 4.1 Averages of key eco-indexes | Əsas indekslərin ortalamaları
+SELECT ROUND(AVG(co2_increase_percent),2)      AS avg_co2_increase,
+       ROUND(AVG(air_quality_drop_index),2)    AS avg_air_drop,
+       ROUND(AVG(water_contamination_index),2) AS avg_water_contam,
+       ROUND(AVG(soil_degradation_index),2)    AS avg_soil_deg
+FROM environmental_impact;
+
+-- 4.2 Worst eco-impact disasters (composite score) | Ən ağır ekoloji təsir
+SELECT d.disaster_name, c.country_name,
+       (ei.co2_increase_percent
+        + ei.air_quality_drop_index
+        + ei.water_contamination_index
+        + ei.soil_degradation_index) AS eco_score
+FROM environmental_impact ei
+JOIN disasters d ON d.disaster_id = ei.disaster_id
+JOIN countries c ON c.country_id = d.country_id
+ORDER BY eco_score DESC
+LIMIT 10;
+
+-- 4.3 Forest loss ranking by country | Meşə itkisi üzrə reytinq
+SELECT c.country_name, SUM(ei.forest_loss_hectares) AS total_forest_loss_ha
+FROM environmental_impact ei
+JOIN disasters d ON d.disaster_id = ei.disaster_id
+JOIN countries c ON c.country_id = d.country_id
+GROUP BY c.country_name
+ORDER BY total_forest_loss_ha DESC
+LIMIT 15;
+
+-- 4.4 Air vs water composite by country | Hava və su indeks kompoziti
+SELECT c.country_name,
+       ROUND(AVG(ei.air_quality_drop_index + ei.water_contamination_index),2) AS air_water_combo
+FROM environmental_impact ei
+JOIN disasters d ON d.disaster_id = ei.disaster_id
+JOIN countries c ON c.country_id = d.country_id
+GROUP BY c.country_name
+ORDER BY air_water_combo DESC;
+
+
+-- ==================================================================
+-- 5) Economic Impact & Recovery | İqtisadi Təsir və Bərpa
+-- ==================================================================
+
+-- 5.1 Yearly country-level macro impact | Ölkə üzrə illik makro təsir
+SELECT c.country_name, e.year,
+       e.total_disasters,
+       e.total_damage_usd_million,
+       e.gdp_loss_percent,
+       e.insurance_payout_usd_million,
+       e.foreign_aid_usd_million,
+       e.recovery_time_years
+FROM economic_impacts e
+JOIN countries c ON c.country_id = e.country_id
+ORDER BY c.country_name, e.year;
+
+-- 5.2 Top GDP loss countries (avg) | Orta ÜDM itkisi ən yüksək ölkələr
+SELECT c.country_name, ROUND(AVG(e.gdp_loss_percent),2) AS avg_gdp_loss
+FROM economic_impacts e
+JOIN countries c ON c.country_id = e.country_id
+GROUP BY c.country_name
+ORDER BY avg_gdp_loss DESC
+LIMIT 10;
+
+-- 5.3 Damage vs insurance coverage rate | Zərər vs sığorta əhatə faizi
+SELECT c.country_name,
+       SUM(e.total_damage_usd_million)     AS total_damage_musd,
+       SUM(e.insurance_payout_usd_million) AS total_insurance_musd,
+       ROUND(SUM(e.insurance_payout_usd_million) * 100.0 /
+             NULLIF(SUM(e.total_damage_usd_million),0), 2) AS coverage_rate_pct
+FROM economic_impacts e
+JOIN countries c ON c.country_id = e.country_id
+GROUP BY c.country_name
+ORDER BY coverage_rate_pct DESC;
+
+-- 5.4 Foreign aid leaders | Xarici yardım liderləri
+SELECT c.country_name, SUM(e.foreign_aid_usd_million) AS total_foreign_aid_musd
+FROM economic_impacts e
+JOIN countries c ON c.country_id = e.country_id
+GROUP BY c.country_name
+ORDER BY total_foreign_aid_musd DESC
+LIMIT 10;
+
+
+-- ==================================================================
+-- 6) Time-Series & Trends | Zaman Seriyası və Trendlər
+-- ==================================================================
+
+-- 6.1 Disasters per year | İllik fəlakət sayı
+SELECT STRFTIME('%Y', d.start_date) AS YEAR, COUNT(*) AS disasters_started
+FROM disasters d
+WHERE d.start_date IS NOT NULL
+GROUP BY YEAR
+ORDER BY YEAR;
+
+-- 6.2 YoY growth of total affected | Təsirlənən əhalinin YoY artımı
+WITH YearAgg AS (
+  SELECT STRFTIME('%Y', d.start_date) AS YEAR,
+         SUM(d.total_affected) AS total_affected
+  FROM disasters d
+  WHERE d.start_date IS NOT NULL
+  GROUP BY YEAR
+)
+SELECT YEAR,
+       total_affected,
+       ROUND((total_affected - LAG(total_affected) OVER(ORDER BY YEAR)) /
+             NULLIF(LAG(total_affected) OVER(ORDER BY YEAR),0) * 100, 2) AS yoy_affected_pct
+FROM YearAgg
+ORDER BY YEAR;
+
+-- 6.3 Moving average of deaths (3-year) | 3 illik hərəkətli orta (ölüm)
+WITH Y AS (
+  SELECT STRFTIME('%Y', d.start_date) AS YEAR,
+         SUM(d.total_deaths) AS deaths
+  FROM disasters d
+  WHERE d.start_date IS NOT NULL
+  GROUP BY YEAR
+)
+SELECT YEAR, deaths,
+       ROUND(AVG(deaths) OVER (ORDER BY YEAR ROWS BETWEEN 2 PRECEDING AND CURRENT ROW),2) AS ma3_deaths
+FROM Y
+ORDER BY YEAR;
+
+-- 6.4 Peak months of disaster starts | Başlanğıcların pik ayları
+SELECT STRFTIME('%m', d.start_date) AS month_num,
+       COUNT(*) AS starts
+FROM disasters d
+WHERE d.start_date IS NOT NULL
+GROUP BY month_num
+ORDER BY starts DESC;
+
+
+-- ==================================================================
+-- 7) Advanced Impact Analysis (Window Functions) | İrəli Analitika
+-- ==================================================================
+
+-- 7.1 Most damaging disaster per type (Top-1 by type) | Növ üzrə ən zərərli fəlakət
+WITH X AS (
+  SELECT d.disaster_id, d.disaster_name, d.disaster_type_id, d.total_damage,
+         ROW_NUMBER() OVER (PARTITION BY d.disaster_type_id ORDER BY d.total_damage DESC) AS rn
+  FROM disasters d
+)
+SELECT dt.disaster_type, x.disaster_name, x.total_damage
+FROM X
+JOIN disaster_types dt ON dt.disaster_type_id = x.disaster_type_id
+WHERE x.rn = 1
+ORDER BY x.total_damage DESC;
+
+-- 7.2 Duration outliers (mean+2*sd) | Davametmə “outlier”ləri
+WITH Dur AS (
+  SELECT d.disaster_name,
+         (JULIANDAY(d.end_date) - JULIANDAY(d.start_date)) AS days_len
+  FROM disasters d
+  WHERE d.start_date IS NOT NULL AND d.end_date IS NOT NULL
+), Stats AS (
+  SELECT AVG(days_len) AS avg_len, 
+         -- SQLite/Valentina do not have STDDEV natively; approximate via variance formula if extension absent.
+         -- If STDDEV is unavailable, you may compute percentile-based outliers instead.
+         NULL AS sd_len
+  FROM Dur
+)
+SELECT d.disaster_name, ROUND(d.days_len,2) AS days_len
+FROM Dur d
+-- NOTE: Replace this WHERE with a percentile filter if STDDEV() is not available in your engine.
+ORDER BY d.days_len DESC
+LIMIT 15;
+
+-- 7.3 “Impact density”: deaths per day | “Təsir sıxlığı”: günə görə ölüm
+SELECT d.disaster_name,
+       ROUND(d.total_deaths / NULLIF(JULIANDAY(d.end_date) - JULIANDAY(d.start_date),0),2) AS deaths_per_day
+FROM disasters d
+WHERE d.start_date IS NOT NULL AND d.end_date IS NOT NULL
+ORDER BY deaths_per_day DESC
+LIMIT 15;
+
+-- 7.4 GDP loss vs CO₂ rise (country blended) | ÜDM itkisi və CO₂ artımı əlaqəsi
+SELECT c.country_name,
+       ROUND(AVG(e.gdp_loss_percent),2)      AS avg_gdp_loss_pct,
+       ROUND(AVG(ei.co2_increase_percent),2) AS avg_co2_inc_pct
+FROM countries c
+JOIN disasters d         ON d.country_id = c.country_id
+JOIN environmental_impact ei ON ei.disaster_id = d.disaster_id
+JOIN economic_impacts e  ON e.country_id = c.country_id
+GROUP BY c.country_name
+ORDER BY avg_co2_inc_pct DESC;
+
+-- 7.5 Time-to-aid vs severity | Yardıma qədər keçən gün vs şiddət
+SELECT dt.disaster_type,
+       ROUND(AVG(r.response_time_days),2) AS avg_resp_days,
+       ROUND(AVG(d.severity_index),2)     AS avg_severity
+FROM relief_efforts r
+JOIN disasters d       ON d.disaster_id = r.disaster_id
+JOIN disaster_types dt ON dt.disaster_type_id = d.disaster_type_id
+GROUP BY dt.disaster_type
+ORDER BY avg_resp_days ASC;
+
+
+/* =============================== END ================================= */
+
+
+
+
+
+
+
+SELECT AVG(co2_increase_percent), AVG(air_quality_drop_index)
+FROM environmental_impact;
+
+
+
+
+
+
+
